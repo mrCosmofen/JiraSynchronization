@@ -1,0 +1,55 @@
+synch.external.jira:
+    url: https://jira.lanit.ru
+    user: a.pak
+    password: Pakai%48237
+    jql: project in ( "ГИС ЖКХ", "ГИС ЖКХ Внутренний" ) AND assignee in membersOf(DKS_HCS_SIBSOFT_DEV) AND status not in (Closed, Закрыт, Resolved, Отменена)
+synch.scheduler:
+    cronExpression : 0 0/3 7-22 1/1 * ? *
+synch.local.jira:
+    url: http://ext-srv:8080/jira
+    user: pakai
+    password: pzq851za
+    project: HCS
+    issueTypes:
+      - Story (Ошибка), Bug
+      - Story (Ошибка), Наведенный дефект приемки
+    logins:
+      - pakai,pakaiext
+      - yarchuknv,yarchuknvext
+    passwords:
+      - pakaipass,pakaipassext
+      - yarchuknvpass,yarchuknvpassext
+    fixVersions:
+      - localTestV,extTestV
+    priorities:
+          - Сделать сейчас,Blocker
+          - Срочный,Critical
+          - Важный,Major
+          - Нормальный,Minor
+          - Нормальный,Trivial
+    components:
+          - Форум,Форум
+          - Форум,Форум дома
+          - Тарифы,Тарифы
+          - Тарифы,Интеграция.ДОГ
+          - ДУО,Интеграция.ДУО
+          - ДУО,ДУО
+          - ДУО,ДУО (Раскрытие УО)
+          - Индексы,Индексы
+          - Нормативы,Нормативы
+          - ОТС,ОТС
+          - ЖС и ФХ, ФХ
+          - ЖС и ФХ, Журнал
+    defaultReporter: denisovkn
+    defaultCustomer: ГИС ЖКХ
+    defaultBugType: Story (Ошибка)
+    defaultBugReason: Ошибка разработки
+    temporaryDir: C:/temp
+hibernate:
+    url: jdbc:postgresql://localhost:5432/synchdb
+    username: postgres
+    password: her
+    driver: org.postgresql.Driver
+    dialect: org.hibernate.dialect.PostgreSQLDialect
+    hbm2ddlAuto: create
+    showSql: false
