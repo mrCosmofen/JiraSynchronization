@@ -8,17 +8,17 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Created by PakAI on 23.03.2016.
+ * Created by PakAI on 28.03.2016.
  */
 @Component
-public class PrioritiesConverter extends AbstractConverter{
+public class ComponentsConverter extends AbstractConverter {
 
-    private static final Map<String, String> PRIORITIES = new HashMap<>();
+    private static final Map<String, String> COMPONENTS = new HashMap<>();
 
     @PostConstruct
     private void init() {
-        for (String[] strings : localJiraConfig.getPriorities()) {
-            PRIORITIES.put(strings[1], strings[0]);
+        for (String[] strings : localJiraConfig.getComponents()) {
+            COMPONENTS.put(strings[1], strings[0]);
         }
     }
 
@@ -30,12 +30,12 @@ public class PrioritiesConverter extends AbstractConverter{
     /**
      * Конвертит тип задачи из типа внешней жиры, в тип внутренней
      * на основе конфигурации приложения
-     * Если тип не найден - по-умолчанию "Нормальный"
+     * Если тип не найден - по-умолчанию null
      */
     @Override
-    public String convertFromExternal(String extPriority) {
-        String localPriority = PRIORITIES.get(extPriority);
-        return StringUtils.isEmpty(localPriority) ? "Нормальный" : localPriority;
+    public String convertFromExternal(String extComponent) {
+        String localComponent = COMPONENTS.get(extComponent);
+        return StringUtils.isEmpty(localComponent) ? null: localComponent;
     }
 
 }

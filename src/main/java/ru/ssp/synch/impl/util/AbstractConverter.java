@@ -12,4 +12,8 @@ public abstract class AbstractConverter {
 
     @Autowired
     protected LocalJiraConfiguration localJiraConfig;
+
+    public abstract void convertFromLocal();
+
+    public abstract String convertFromExternal(String extType);
 }

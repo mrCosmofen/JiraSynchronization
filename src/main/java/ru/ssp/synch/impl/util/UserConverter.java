@@ -22,6 +22,7 @@ public class UserConverter extends AbstractConverter {
         }
     }
 
+    @Override
     public void convertFromLocal() {
         //todo implement if needed
     }
@@ -31,6 +32,7 @@ public class UserConverter extends AbstractConverter {
      * на основе конфигурации приложения
      * Если пользователь не найден - по-умолчанию user з конфигурации
      */
+    @Override
     public String convertFromExternal(String extLogin) {
         String localLogin = USER_LOGINS.get(extLogin);
         return StringUtils.isEmpty(localLogin) ? localJiraConfig.getUser() : localLogin;

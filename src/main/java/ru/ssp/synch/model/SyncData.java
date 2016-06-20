@@ -18,7 +18,7 @@ indexes = {
         @Index(name = "EXT_STATUS_INDEX", columnList = "EXT_JIRA_STATUS"),
         @Index(name = "LOCAL_STATUS_INDEX", columnList = "LOCAL_JIRA_STATUS"),
         @Index(name = "LOCAL_JIRA_KEY_INDEX", columnList = "LOCAL_JIRA_KEY"),
-        @Index(name = "EXT_JIRA_KEY_INDEX", columnList = "EXT_JIRA_KEY")
+        @Index(name = "EXT_JIRA_KEY_INDEX", columnList = "EXT_JIRA_KEY",unique = true)
 })
 @DynamicUpdate
 public class SyncData {

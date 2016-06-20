@@ -35,6 +35,8 @@ public class LocalJiraConfiguration extends JiraConfiguration {
 
     private List<String[]>  priorities;
 
+    private List<String[]>  components;
+
     /**
      * Sets new passwords.
      *
@@ -231,5 +233,23 @@ public class LocalJiraConfiguration extends JiraConfiguration {
      */
     public void setTemporaryDir(String temporaryDir) {
         this.temporaryDir = temporaryDir;
+    }
+
+    /**
+     * Gets components.
+     *
+     * @return Value of components.
+     */
+    public List<String[]> getComponents() {
+        return components;
+    }
+
+    /**
+     * Sets new components.
+     *
+     * @param components New value of components.
+     */
+    public void setComponents(List<String[]> components) {
+        this.components = components;
     }
 }

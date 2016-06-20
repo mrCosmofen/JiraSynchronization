@@ -48,6 +48,7 @@ public class TransitionHelper {
         if (StringUtils.isNotEmpty(readyTransition)) {
             issue.transition()
                     .execute(readyTransition);
+            issue.transition().execute("Готова к работе");
         }
 
     }
@@ -75,7 +76,7 @@ public class TransitionHelper {
     public String getReadyTransition(Object[] availableTransitions) {
         List<Object> transitions = Arrays.asList(availableTransitions);
         Optional<Object> transition = transitions.stream()
-                .filter(o -> ((DynaBean) ((DynaBean) o).get("to")).get("name").equals("Открытый"))
+                .filter(o -> ((DynaBean) ((DynaBean) o).get("to")).get("name").equals("Открыт"))
                 .findFirst();
         if (transition.isPresent()) {
             DynaBean bean = (DynaBean) transition.get();

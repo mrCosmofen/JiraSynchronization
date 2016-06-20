@@ -83,9 +83,29 @@ public class SynchronizationService {
 
         extIssueKeys.forEach(String::trim);
 
-        Issue.SearchResult existingIssuesSearchResult = localJira.searchIssues(String.format("labels in (%s)", StringUtils.join(extIssueKeys, ',')));
+        Issue.SearchResult existingIssuesSearchResult = localJira.searchIssues(String.format("labels in (%s)", StringUtils.join(extIssueKeys, ',')), "*all");
 
-        Map<String, Issue> existingLocalJiraIssues = existingIssuesSearchResult.issues.stream()
+        List<Issue> issues = existingIssuesSearchResult.issues.stream()
+                .sorted((o1, o2) -> MappingUtils.getUpdatedDate(o1).compareTo(MappingUtils.getUpdatedDate(o2)))
+                .collect(Collectors.toList());
+        Set<String> allItems = new HashSet<>();
+        Set<Issue> duplicates = issues.stream()
+                .filter(n -> !allItems.add(n.getLabels().stream()
+                        .filter(s -> s.matches("HCS.*")).findFirst().get())) //Set.add() returns false if the item was already in the set.
+
+                .collect(Collectors.toSet());
+
+        duplicates.forEach(i -> {
+            try {
+                localJiraService.deleteIssue(i);
+            } catch (JiraException e) {
+                e.printStackTrace();
+            }
+        });
+
+        issues.removeAll(duplicates);
+
+        Map<String, Issue> existingLocalJiraIssues = issues.stream()
                 .collect(Collectors.toMap(
                         issue -> issue.getLabels()
                                 .stream()
@@ -93,7 +113,6 @@ public class SynchronizationService {
                         Function.identity()));
 
         Set<String> localJiraIssueKeys = existingLocalJiraIssues.keySet();
-        extIssueKeys.removeAll(localJiraIssueKeys);
 
         List<SyncData> issuesToAddInDB = issuesInExtJira.stream()
                 .filter(issue -> localJiraIssueKeys.contains(issue.getKey()))
@@ -167,7 +186,7 @@ public class SynchronizationService {
                 .filter(issue -> {
                     SyncData existingSyncData = syncDataMap.get(issue.getKey());
                     Date updatedDate = MappingUtils.getUpdatedDate(issue);
-                    return updatedDate != null && (existingSyncData.getLocalJiraLastEventDate().getTime() != updatedDate.getTime()
+                    return existingSyncData !=null && updatedDate != null && (existingSyncData.getLocalJiraLastEventDate().getTime() != updatedDate.getTime()
                             || !existingSyncData.getLocalJiraStatus().equals(issue.getStatus().getName()));
                 })
                 .map(issue -> {

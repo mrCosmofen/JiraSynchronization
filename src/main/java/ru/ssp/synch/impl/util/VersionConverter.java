@@ -25,6 +25,7 @@ public class VersionConverter extends AbstractConverter {
         }
     }
 
+    @Override
     public void convertFromLocal() {
         //todo implement if needed
     }
@@ -34,11 +35,9 @@ public class VersionConverter extends AbstractConverter {
      * на основе конфигурации приложения
      * Если версия не найдена - по-умолчанию null
      */
-    public String convertFromExternal(List<Version> extVersion) {
-        if (CollectionUtils.isEmpty(extVersion) || extVersion.size() > 1) {
-            return null;
-        }
-        String localVersion = FIX_VERSIONS.get(extVersion.get(0).getName());
+    @Override
+    public String convertFromExternal(String extVersion) {
+        String localVersion = FIX_VERSIONS.get(extVersion);
         return StringUtils.isEmpty(localVersion) ? null : localVersion;
     }
 }

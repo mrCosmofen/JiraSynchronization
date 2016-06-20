@@ -22,6 +22,7 @@ public class IssueTypeConverter extends AbstractConverter {
         }
     }
 
+    @Override
     public void convertFromLocal() {
         //todo implement if needed
     }
@@ -31,6 +32,7 @@ public class IssueTypeConverter extends AbstractConverter {
      * на основе конфигурации приложения
      * Если тип не найден - по-умолчанию Story
      */
+    @Override
     public String convertFromExternal(String extType) {
         String localType = ISSUE_TYPES.get(extType);
         return StringUtils.isEmpty(localType) ? "Story" : localType;

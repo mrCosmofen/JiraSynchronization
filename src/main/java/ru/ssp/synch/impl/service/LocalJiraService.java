@@ -17,10 +17,8 @@ import ru.ssp.synch.model.SyncData;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Collections;
-import java.util.List;
+import java.net.URI;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static net.rcarz.jiraclient.Field.*;
@@ -58,6 +56,9 @@ public class LocalJiraService extends AbstractJiraService {
     private VersionConverter versionConverter;
 
     @Autowired
+    private ComponentsConverter componentsConverter;
+
+    @Autowired
     private PrioritiesConverter prioritiesConverter;
 
     @Autowired
@@ -83,9 +84,12 @@ public class LocalJiraService extends AbstractJiraService {
                 .field(REPORTER, localJiraConfig.getDefaultReporter())
                 .field(DESCRIPTION, description)
                 .field(LABELS, getLabels(extIssue))
-                .field(FIX_VERSIONS, versionConverter.convertFromExternal(extIssue.getFixVersions()))
                 .field(PRIORITY, prioritiesConverter.convertFromExternal(extIssue.getPriority().getName()))
                 .field(CUSTOMER, Collections.singletonList(getCustomer(project).getValue()));
+
+        addfixVersions(extIssue, fluentCreate);
+
+        addComponents(extIssue, fluentCreate);
 
         Object environment = extIssue.getField(ENVIRONMENT);
         if (notNull(environment)) {
@@ -127,13 +131,54 @@ public class LocalJiraService extends AbstractJiraService {
                 || CollectionUtils.isNotEmpty(newComments)) {
             String localJiraKey = syncData.getLocalJiraKey();
             transitionHelper.flowToReadyState(localJiraKey, true);
+
             Issue issue = jiraClient.getIssue(localJiraKey);
             addComments(issue, newComments);
             addAttachments(issue, newAttachments);
-            LOG.info("Updated issue with key: " + localJiraKey);
             syncData.setExtJiraLastEventDate(MappingUtils.getUpdatedDate(extIssue));
             syncData.setExtJiraStatus(extIssue.getStatus().getName());
             syncDataRepository.save(syncData);
+            LOG.info("Updated issue with key: " + localJiraKey);
+        }
+    }
+
+    public boolean deleteIssue(Issue issue) throws JiraException {
+        String key = issue.getKey();
+        try {
+            JiraClient jiraClient = getJiraClient();
+            java.lang.reflect.Field f = jiraClient.getClass().getDeclaredField("restclient");
+            f.setAccessible(true);
+            RestClient restclient = (RestClient) f.get(jiraClient);
+
+            URI uri = restclient.buildURI("/rest/api/latest/issue/" + key, new HashMap<String, String>() {{
+                put("deleteSubtasks", String.valueOf(true));
+            }});
+            LOG.info("Deleted issue with key: " + key);
+            return (restclient.delete(uri) == null);
+        } catch (Exception ex) {
+            throw new JiraException("Failed to delete issue " + key, ex);
+        }
+    }
+
+    private void addComponents(Issue extIssue, Issue.FluentCreate fluentCreate) {
+        List<Component> components = extIssue.getComponents();
+        if(CollectionUtils.isNotEmpty(components)) {
+            List<String> componentNames = components.stream()
+                    .map(component -> componentsConverter.convertFromExternal(component.getName()))
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
+            fluentCreate.field(COMPONENTS, componentNames);
+        }
+    }
+
+    private void addfixVersions(Issue extIssue, Issue.FluentCreate fluentCreate) {
+        List<Version> fixVersions = extIssue.getFixVersions();
+        if(CollectionUtils.isNotEmpty(fixVersions)) {
+            List<String> versions = fixVersions.stream()
+                    .map(version -> versionConverter.convertFromExternal(version.getName()))
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
+            fluentCreate.field(FIX_VERSIONS, versions);
         }
     }
 
@@ -161,8 +206,11 @@ public class LocalJiraService extends AbstractJiraService {
             } catch (JiraException | IOException e) {
                 LOG.error("Не удалось загрузить файл по ссылке: ", attachment.getContentUrl());
             } finally {
-                if(tempFile != null){
-                    tempFile.delete();
+                if (tempFile != null) {
+                    boolean delete = tempFile.delete();
+                    if(!delete){
+                        LOG.error("Не удалось удалить файл: " + tempFile.getName());
+                    }
                 }
             }
         }
@@ -204,7 +252,10 @@ public class LocalJiraService extends AbstractJiraService {
     }
 
     private String getComment(Comment comment) {
-        return String.format(COMMENT_TEMPLATE, "Автор: " + comment.getAuthor(), comment.getBody());
+        String title = "Автор: " + comment.getAuthor();
+        Date createdDate = comment.getCreatedDate();
+        title += createdDate != null ? " " + createdDate : "";
+        return String.format(COMMENT_TEMPLATE, title, comment.getBody());
     }
 
     private String getFirstComment(Issue issue) {
